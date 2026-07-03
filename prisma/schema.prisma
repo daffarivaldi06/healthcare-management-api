@@ -1,0 +1,96 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  DOCTOR
+  STAFF
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
+enum DocumentType {
+  MEDICAL_CERTIFICATE
+  REFERRAL_LETTER
+  DISCHARGE_SUMMARY
+}
+
+model User {
+  id           String             @id @default(uuid())
+  name         String
+  email        String             @unique
+  passwordHash String
+  role         UserRole           @default(STAFF)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  appointments Appointment[]      @relation("DoctorAppointments")
+  documents    HospitalDocument[] @relation("DocumentCreator")
+  auditLogs    AuditLog[]
+}
+
+model Patient {
+  id                    String             @id @default(uuid())
+  fullName              String
+  dateOfBirth           DateTime
+  gender                Gender
+  phone                 String
+  address               String
+  emergencyContactName  String
+  emergencyContactPhone String
+  medicalRecordNumber   String             @unique
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+  appointments          Appointment[]
+  documents             HospitalDocument[]
+}
+
+model Appointment {
+  id        String            @id @default(uuid())
+  patientId String
+  doctorId  String
+  scheduledAt DateTime
+  reason    String?
+  status    AppointmentStatus @default(SCHEDULED)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  patient   Patient           @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctor    User              @relation("DoctorAppointments", fields: [doctorId], references: [id])
+}
+
+model HospitalDocument {
+  id        String       @id @default(uuid())
+  title     String
+  content   String
+  type      DocumentType
+  patientId String
+  createdBy String
+  createdAt DateTime     @default(now())
+  patient   Patient      @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  creator   User         @relation("DocumentCreator", fields: [createdBy], references: [id])
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?
+  action     String
+  entityType String
+  entityId   String
+  timestamp  DateTime @default(now())
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
