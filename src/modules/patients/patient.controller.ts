@@ -32,7 +32,15 @@ export const getPatients = asyncHandler(async (req, res) => {
     : {};
 
   const [patients, total] = await Promise.all([
-    prisma.patient.findMany({ where, skip, take: limit, orderBy: { createdAt: 'desc' } }),
+    prisma.patient.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true, fullName: true, dateOfBirth: true, gender: true, phone: true, medicalRecordNumber: true, createdAt: true
+      }
+    }),
     prisma.patient.count({ where })
   ]);
 

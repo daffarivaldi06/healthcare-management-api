@@ -58,6 +58,9 @@ model Patient {
   updatedAt             DateTime           @updatedAt
   appointments          Appointment[]
   documents             HospitalDocument[]
+
+  @@index([fullName])
+  @@index([phone])
 }
 
 model Appointment {
